@@ -11,11 +11,9 @@ const MediaItem = ({ item, className, onClick }) => {
   const [isInView, setIsInView] = useState(false);
   const [isBuffering, setIsBuffering] = useState(true);
 
-  // Observe element visibility
   useEffect(() => {
     const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((entry) => setIsInView(entry.isIntersecting)),
+      (entries) => entries.forEach((entry) => setIsInView(entry.isIntersecting)),
       { threshold: 0.2 }
     );
 
@@ -23,7 +21,6 @@ const MediaItem = ({ item, className, onClick }) => {
     return () => videoRef.current && observer.unobserve(videoRef.current);
   }, []);
 
-  // Auto-play when visible
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -72,14 +69,10 @@ const MediaItem = ({ item, className, onClick }) => {
 // -----------------------------
 // Large Modal Viewer + Dock
 // -----------------------------
-const GalleryModal = ({
-  selectedItem,
-  isOpen,
-  onClose,
-  setSelectedItem,
-  mediaItems,
-}) => {
+const GalleryModal = ({ selectedItem, isOpen, onClose, setSelectedItem, mediaItems }) => {
   if (!isOpen) return null;
+
+  const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
 
   return (
     <>
@@ -99,9 +92,7 @@ const GalleryModal = ({
           <MediaItem item={selectedItem} className="w-full h-[60vh]" />
 
           <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/70 to-transparent">
-            <h3 className="text-white text-lg font-semibold">
-              {selectedItem.title}
-            </h3>
+            <h3 className="text-white text-lg font-semibold">{selectedItem.title}</h3>
             <p className="text-white/70 text-sm">{selectedItem.desc}</p>
           </div>
 
@@ -116,7 +107,7 @@ const GalleryModal = ({
 
       {/* Draggable dock */}
       <motion.div
-        drag
+        drag={isDesktop ? true : false}
         dragElastic={0.1}
         className="fixed bottom-5 w-full flex justify-center z-50"
       >
@@ -148,6 +139,8 @@ const InteractiveBentoGallery = ({ mediaItems, title, description }) => {
   const [items, setItems] = useState(mediaItems);
   const [isDragging, setIsDragging] = useState(false);
 
+  const isDesktop = typeof window !== "undefined" && window.innerWidth > 768;
+
   return (
     <div className="px-4 py-10 max-w-6xl mx-auto">
       {/* Title */}
@@ -178,16 +171,14 @@ const InteractiveBentoGallery = ({ mediaItems, title, description }) => {
             auto-rows-[120px] sm:auto-rows-[150px] md:auto-rows-[180px]
           "
         >
-          {items.map((item, index) => (
+          {items.map((item) => (
             <motion.div
               key={item.id}
               layout
-              drag
+              drag={isDesktop ? "x" : false}
               dragElastic={1}
-              onDragStart={() => setIsDragging(true)}
-              onDragEnd={(e, info) => {
-                setIsDragging(false);
-              }}
+              onDragStart={(e) => e.pointerType !== "touch" && setIsDragging(true)}
+              onDragEnd={() => setIsDragging(false)}
               onClick={() => !isDragging && setSelectedItem(item)}
               className={`relative rounded-xl overflow-hidden cursor-pointer bg-gray-100 shadow-sm hover:shadow-lg transition ${
                 item.span || ""
@@ -214,4 +205,5 @@ const InteractiveBentoGallery = ({ mediaItems, title, description }) => {
     </div>
   );
 };
+
 export default InteractiveBentoGallery;
